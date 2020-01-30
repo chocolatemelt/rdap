@@ -1,0 +1,37 @@
+{
+  "queryType": "topN",
+  "dataSource": "scryfall",
+  "granularity": "day",
+  "dimension": "set",
+  "threshold": 20,
+  "metric": "avg",
+  "aggregations": [
+    {
+      "type": "count",
+      "name": "count"
+    },
+    {
+      "type": "doubleSum",
+      "name": "sum",
+      "fieldName": "usd_price"
+    }
+  ],
+  "postAggregations": [
+    {
+      "type": "arithmetic",
+      "name": "avg",
+      "fn": "quotient",
+      "fields": [
+        {
+          "type": "fieldAccess",
+          "fieldName": "sum"
+        },
+        {
+          "type": "fieldAccess",
+          "fieldName": "count"
+        }
+      ]
+    }
+  ],
+  "intervals": [ "2019-09-21/2019-09-22" ]
+}

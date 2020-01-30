@@ -1,0 +1,82 @@
+{
+	"type": "kafka",
+	"dataSchema": {
+		"dataSource": "scryfall",
+		"parser": {
+			"type": "string",
+			"parseSpec": {
+				"format": "json",
+				"timestampSpec": {
+					"column": "timestamp",
+					"format": "auto"
+				},
+				"flattenSpec": {
+					"useFieldDiscovery": true,
+					"fields": [
+						{
+							"type": "path",
+							"name": "usd_price",
+							"expr": "$.prices.usd"
+						}
+					]
+				},
+				"dimensionsSpec": {
+					"dimensions": [
+						"id",
+						"oracle_id",
+						"tcgplayer_id",
+						"name",
+						"lang",
+						"released_at",
+						"mana_cost",
+						{
+							"type": "long",
+							"name": "cmc"
+						},
+						"type_line",
+						"oracle_text",
+						"colors",
+						"color_identity",
+						"set",
+						"set_name",
+						"set_type",
+						{
+							"type": "long",
+							"name": "collector_number"
+						},
+						"rarity",
+						"flavor_text",
+						"artist",
+						{
+							"type": "long",
+							"name": "edhrec_rank"
+						},
+						{
+							"type": "float",
+							"name": "usd_price"
+						}
+					]
+				}
+			}
+		},
+		"metricsSpec" : [],
+		"granularitySpec": {
+			"type": "uniform",
+			"segmentGranularity": "DAY",
+			"queryGranularity": "NONE",
+			"rollup": false
+		}
+	},
+	"tuningConfig": {
+		"type": "kafka",
+		"reportParseExceptions": false
+	},
+	"ioConfig": {
+		"topic": "mtg",
+		"taskDuration": "PT10M",
+		"completionTimeout": "PT20M",
+		"consumerProperties": {
+			"bootstrap.servers": "localhost:9092"
+		}
+	}
+}

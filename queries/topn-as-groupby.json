@@ -1,0 +1,18 @@
+{
+  "queryType": "groupBy",
+  "dataSource": "scryfall",
+  "granularity": "day",
+  "dimensions": ["set", "name", "usd_price"],
+  "limitSpec": {
+    "type": "default",
+    "limit": 100,
+    "columns": [
+      {
+        "dimension": "usd_price",
+        "direction": "descending",
+        "dimensionOrder": "numeric"
+      }
+    ]
+  },
+  "intervals": [ "2019-09-21/2019-09-22" ]
+}

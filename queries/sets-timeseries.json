@@ -1,0 +1,23 @@
+{
+  "queryType": "timeseries",
+  "dataSource": "scryfall",
+  "granularity": "day",
+  "descending": "true",
+  "filter": {
+    "type": "and",
+    "fields": [
+      { "type": "selector", "dimension": "set", "value": "10e" }
+		]
+  },
+  "aggregations": [
+    { "type": "count", "name": "count" },
+    { "type": "doubleSum", "name": "prices", "fieldName": "usd_price" }
+  ],
+  "postAggregations": [
+    { "type": "arithmetic", "name": "avg", "fn": "quotient", "fields": [
+        { "type": "fieldAccess", "fieldName": "prices" },
+        { "type": "fieldAccess", "fieldName": "count" }
+    ], "ordering": null }
+  ],
+  "intervals": [ "2019-09-18/2019-09-22" ]
+}

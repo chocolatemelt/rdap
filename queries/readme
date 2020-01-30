@@ -1,0 +1,3 @@
+running queries:
+
+curl -H 'Content-Type:application/json' -d @<query.json> http://localhost:8888.druid/v2?pretty
