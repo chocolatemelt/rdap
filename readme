@@ -1,0 +1,5 @@
+rdap - riot data analytics platform
+----
+
+an application to leverage the power of streamed analytics and the public riot api
+runs on druid and kafka
