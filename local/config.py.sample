@@ -1,0 +1,5 @@
+api =
+kafka_topic = 'test'
+kafka_brokers = [
+    'localhost:9092'
+]
