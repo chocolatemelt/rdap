@@ -1,0 +1,6 @@
+riot:
+  api_key: RGAPI-81484f4a-833c-46c0-8d22-0f68685f0ef0
+  region: na1
+kafka:
+  topic: test
+  broker: localhost:9092
