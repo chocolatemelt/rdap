@@ -1,0 +1,3 @@
+lake: datastores for analytics
+----
+currently only one lake, handling timeseries data with druid
