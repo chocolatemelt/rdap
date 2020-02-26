@@ -1,0 +1,11 @@
+vis: frontend interface for rdap
+---
+running:
+
+  $ npm start
+
+building:
+
+	$ npm run build
+
+bootstrapped with create-react-app
