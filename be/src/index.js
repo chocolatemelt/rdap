@@ -1,3 +1,5 @@
+import "core-js/stable";
+import "regenerator-runtime/runtime";
 import Koa from 'koa';
 
 const app = new Koa();
