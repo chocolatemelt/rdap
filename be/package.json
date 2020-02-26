@@ -1,0 +1,24 @@
+{
+  "name": "@rdap/be",
+  "version": "0.1.0",
+  "description": "be -- koa middleware for rdap",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "koa": "^2.11.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chocolatemelt/rdap.git"
+  },
+  "author": "kev",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chocolatemelt/rdap/issues"
+  },
+  "homepage": "https://github.com/chocolatemelt/rdap#readme"
+}

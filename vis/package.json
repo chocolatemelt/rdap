@@ -1,5 +1,5 @@
 {
-  "name": "vis",
+  "name": "@rdap/vis",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
