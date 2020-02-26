@@ -1,3 +1,6 @@
 lake: datastores for analytics
 ----
 currently only one lake, handling timeseries data with druid
+
+druid==apache-druid-0.17.0
+kafka==kafka_2.12-2.1.0
