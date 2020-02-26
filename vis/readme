@@ -6,6 +6,6 @@ running:
 
 building:
 
-	$ npm run build
+  $ npm run build
 
 bootstrapped with create-react-app
