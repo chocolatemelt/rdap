@@ -11,12 +11,6 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("ids", nargs="+", help="summoner names to scout")
 parser.add_argument(
-    "-a", help="highlight champs shared with JHU A team", action="store_true"
-)
-parser.add_argument(
-    "-b", help="highlight champs shared with JHU B team", action="store_true"
-)
-parser.add_argument(
     "-d",
     "--days",
     help="maximum number of days ago to count recent champs from",
@@ -28,66 +22,10 @@ parser.add_argument("--norms", help="include normal games", action="store_true")
 args = parser.parse_args()
 
 shared_list = []
-# For A team
-if args.a:
-    shared_list += [
-        "Renekton",
-        "Aatrox",
-        "Sett",
-        "Rek'Sai",
-        "Zac",
-        "Gragas",
-        "Camille",
-        "Syndra",
-        "Yasuo",
-        "Orianna",
-        "Cassiopeia",
-        "Galio",
-        "Varus",
-        "Ezreal",
-        "Lucian",
-        "Pyke",
-        "Leona",
-        "Nautilus",
-        "Braum",
-    ]
-# shared_list = ['Renekton', 'Aatrox', 'Sett', 'Zac', "Rek'Sai", 'Gragas', 'Elise', 'Yasuo', 'Syndra', 'Kayn', 'Pyke'] # based on actual recent play
-
-# For B team, based on preferences and recent picks
-if args.b:
-    shared_list += [
-        "Ornn",
-        "Kled",
-        "Sett",
-        "Poppy",
-        "Ekko",
-        "Jarvan IV",
-        "Zac",
-        "Rek'Sai",
-        "Sejuani",
-        "Nautilus",
-        "Leona",
-        "Braum",
-        "Morgana",
-        "Cassiopeia",
-        "Ryze",
-        "Syndra",
-        "Corki",
-        "Qiyana",
-        "Aphelios",
-        "Lucian",
-        "Caitlyn",
-        "Miss Fortune",
-        "Braum",
-        "Morgana",
-        "Nautilus",
-        "Nami",
-        "Leona",
-    ]
 
 # Get parsed HTML from URL
 def get_soup(url):
-    return BeautifulSoup(requests.get(url).text, "html.parser")
+    return BeautifulSoup(requests.get(url).text, "lxml")
 
 
 flex = not args.noflex  # include flex?
@@ -151,9 +89,9 @@ def recent_games(user, soup):
             + summoner_id
         )
         if "json" in page.headers["Content-Type"]:
-            soup = BeautifulSoup(page.json()["html"], "html.parser")
+            soup = BeautifulSoup(page.json()["html"], "lxml")
         else:
-            soup = BeautifulSoup(page.text, "html.parser")
+            soup = BeautifulSoup(page.text, "lxml")
 
     if not data:
         return pd.DataFrame(columns=["Champion", "Games", "Wins"]), ""
