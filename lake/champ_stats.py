@@ -5,7 +5,6 @@
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import openpyxl
 import sys
 import argparse
 
@@ -400,39 +399,39 @@ def pr_hi(val):
 
 
 # Output the data in order, horizontally, in 3 rows [recent -- S10 -- S9]
-out_file = "champ_data.xlsx"
-writer = pd.ExcelWriter(out_file)
-for i, (rec, s10, s9) in enumerate(zip(out_rec, out_s10, out_s9)):
-    rec.head(10).style.applymap(shared, "Champion").applymap(
-        rec_hi, ["Games", "Wins"]
-    ).to_excel(writer, index=False, startrow=start_rec, startcol=4 * i)
-    s10.style.applymap(shared, "Champion").applymap(wr_hi, "Winrate").applymap(
-        pr_hi, (range(len(s10) - 1), "Pickrate")
-    ).to_excel(writer, index=False, startrow=start_s10, startcol=4 * i)
-    s9.style.applymap(shared, "Champion").applymap(wr_hi, "Winrate").applymap(
-        pr_hi, (range(len(s9) - 1), "Pickrate")
-    ).to_excel(writer, index=False, startrow=start_s9, startcol=4 * i)
-writer.save()
+# out_file = "champ_data.xlsx"
+# writer = pd.ExcelWriter(out_file)
+# for i, (rec, s10, s9) in enumerate(zip(out_rec, out_s10, out_s9)):
+#     rec.head(10).style.applymap(shared, "Champion").applymap(
+#         rec_hi, ["Games", "Wins"]
+#     ).to_excel(writer, index=False, startrow=start_rec, startcol=4 * i)
+#     s10.style.applymap(shared, "Champion").applymap(wr_hi, "Winrate").applymap(
+#         pr_hi, (range(len(s10) - 1), "Pickrate")
+#     ).to_excel(writer, index=False, startrow=start_s10, startcol=4 * i)
+#     s9.style.applymap(shared, "Champion").applymap(wr_hi, "Winrate").applymap(
+#         pr_hi, (range(len(s9) - 1), "Pickrate")
+#     ).to_excel(writer, index=False, startrow=start_s9, startcol=4 * i)
+# writer.save()
 
 # And label them by player name and rank (and adjust the column widths)
-book = openpyxl.load_workbook(out_file)
-sheet = book.active
-sheet.cell(1, 1).value = f'https://na.op.gg/summoner/userName={",".join(users)}'
-sheet.cell(
-    2, 1
-).value = f'Champs played in the last {recent_limit} in {"ranked" + (" + flex" if flex else "") if ranked_only else ""} games'
+# book = openpyxl.load_workbook(out_file)
+# sheet = book.active
+# sheet.cell(1, 1).value = f'https://na.op.gg/summoner/userName={",".join(users)}'
+# sheet.cell(
+#     2, 1
+# ).value = f'Champs played in the last {recent_limit} in {"ranked" + (" + flex" if flex else "") if ranked_only else ""} games'
 
-for i, user in enumerate(users):
-    sheet.cell(start_rec, 1 + 4 * i).value = user
-    sheet.cell(start_rec, 2 + 4 * i).value = lanes[i]
+# for i, user in enumerate(users):
+#     sheet.cell(start_rec, 1 + 4 * i).value = user
+#     sheet.cell(start_rec, 2 + 4 * i).value = lanes[i]
 
-    sheet.cell(start_s10, 1 + 4 * i).value = user
-    sheet.cell(start_s10, 2 + 4 * i).value = ranks_s10[i]
-    sheet.cell(start_s10, 3 + 4 * i).value = "S10"
+#     sheet.cell(start_s10, 1 + 4 * i).value = user
+#     sheet.cell(start_s10, 2 + 4 * i).value = ranks_s10[i]
+#     sheet.cell(start_s10, 3 + 4 * i).value = "S10"
 
-    sheet.cell(start_s9, 1 + 4 * i).value = user
-    sheet.cell(start_s9, 2 + 4 * i).value = ranks_prev[i]
+#     sheet.cell(start_s9, 1 + 4 * i).value = user
+#     sheet.cell(start_s9, 2 + 4 * i).value = ranks_prev[i]
 
-    sheet.column_dimensions[openpyxl.utils.get_column_letter(1 + 4 * i)].width = 12
-    sheet.column_dimensions[openpyxl.utils.get_column_letter(2 + 4 * i)].width = 12
-book.save(out_file)
+#     sheet.column_dimensions[openpyxl.utils.get_column_letter(1 + 4 * i)].width = 12
+#     sheet.column_dimensions[openpyxl.utils.get_column_letter(2 + 4 * i)].width = 12
+# book.save(out_file)
