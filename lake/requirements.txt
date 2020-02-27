@@ -1,15 +1,4 @@
-arrow==0.15.5
-cassiopeia==4.0.8
-certifi==2019.11.28
-chardet==3.0.4
-datapipelines==1.0.7
-decorator==4.4.1
-idna==2.9
-merakicommons==1.0.9
-networkx==2.4
-Pillow==7.0.0
-python-dateutil==2.8.1
+black==19.10b0
 PyYAML==5.3
 requests==2.23.0
-six==1.14.0
 urllib3==1.25.8

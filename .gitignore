@@ -1,2 +1,5 @@
 # venv
 env/**
+
+# configs, etc.
+config.yml

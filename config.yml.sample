@@ -1,0 +1,6 @@
+riot:
+  api_key: RGAPI-XXXX
+  region: NA
+kafka:
+  topic: test
+  broker: localhost:9092
