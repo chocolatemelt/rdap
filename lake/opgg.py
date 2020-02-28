@@ -6,16 +6,21 @@ import sys
 import urllib
 
 LANE_MAPPING = {0: "Top", 1: "Jungle", 2: "Mid", 3: "Bot", 4: "Support", 5: ""}
+OPGG_REGION = "na"
 
 
 def boil(url):
     return BeautifulSoup(requests.get(url).text, "lxml")
 
 
-def boil_opgg_route(route, params):
+def get_opgg_route(route, params, region=OPGG_REGION):
     parsed_params = urllib.parse.urlencode(params)
-    print(parsed_params)
-    opgg_soup = boil(f"https://na.op.gg/{route}/{parsed_params}")
+    return f"https://{region}.op.gg{route}/{parsed_params}"
+
+
+def boil_opgg(route, params, region=OPGG_REGION):
+    parsed_params = urllib.parse.urlencode(params)
+    opgg_soup = boil(get_opgg_route(route, params, region))
 
     if opgg_soup.find(class_="SummonerNotFoundLayout"):
         raise ValueError("summoner not found")
@@ -26,7 +31,7 @@ def boil_opgg_route(route, params):
 def recent_games(
     summoner, recent_limit="21d", flex=False, ranked_only=True, max_entries=30
 ):
-    soup = boil_opgg_route("summoner", {"userName": summoner})
+    soup = boil_opgg("/summoner", {"userName": summoner})
     data = []
     late = 0
     while not soup.find_all(string="There are no results recorded."):
@@ -75,10 +80,10 @@ def recent_games(
 
         # Call another set of games
         page = requests.get(
-            "https://na.op.gg/summoner/matches/ajax/averageAndList/startInfo="
-            + game_time
-            + "&summonerId="
-            + summoner_id
+            get_opgg_route(
+                "/summoner/matches/ajax/averageAndList",
+                {"startInfo": game_time, "summonerId": summoner_id},
+            )
         )
         if "json" in page.headers["Content-Type"]:
             soup = BeautifulSoup(page.json()["html"], "lxml")
@@ -98,7 +103,7 @@ def recent_games(
 
 
 def season_stats(summoner, season_id):
-    soup = boil("https://na.op.gg/summoner/champions/userName=" + summoner)
+    soup = boil_opgg("/summoner/champions", {"userName": summoner})
     soloq = soup.find(class_="tabItem " + season_id)
     rows = []
     champ_data = []
