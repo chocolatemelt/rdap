@@ -4,15 +4,15 @@ import pandas as pd
 import requests
 import sys
 
-num_to_lane = {0: "Top", 1: "Jungle", 2: "Mid", 3: "Bot", 4: "Support", 5: ""}
+LANE_MAPPING = {0: "Top", 1: "Jungle", 2: "Mid", 3: "Bot", 4: "Support", 5: ""}
 
 
-def get_soup(url):
+def boil(url):
     return BeautifulSoup(requests.get(url).text, "lxml")
 
 
-def get_opgg_soup(user):
-    opgg_soup = get_soup("https://na.op.gg/summoner/userName=" + user)
+def get(user):
+    opgg_soup = boil("https://na.op.gg/summoner/userName=" + user)
 
     if opgg_soup.find(class_="SummonerNotFoundLayout"):
         raise ValueError("Summoner not found! Check spelling?")
@@ -23,15 +23,18 @@ def get_opgg_soup(user):
 def recent_games(
     user, soup, recent_limit="21d", flex=False, ranked_only=True, max_entries=30
 ):
+    summoner = user.replace(" ", "").lower()
     data = []
     late = 0
     while not soup.find_all(string="There are no results recorded."):
         for x in soup.find_all(class_="GameItemWrap"):
             game = x.find(class_="GameItem")
+
             # Get timestamp of game (in KR timezone in op.gg -> Pacific)
             t = pd.Timestamp(
                 str(game.find(class_="TimeStamp").span.string)
             ) - pd.Timedelta("17h")
+
             # Stop collecting games that are too old
             if pd.Timestamp.now() - t > pd.Timedelta(recent_limit):
                 late = 1
@@ -52,12 +55,12 @@ def recent_games(
                 for x in game.find_all(class_="SummonerName")
             ]
 
-            if user.lower() in summoners:
+            if summoner in summoners:
                 data += [
                     {
                         "Champion": game.find(class_="ChampionName").a.string,
                         "Win": game["data-game-result"] == "win",
-                        "Lane": num_to_lane[summoners.index(user.lower()) % 5],
+                        "Lane": LANE_MAPPING[summoners.index(summoner) % 5],
                     }
                 ]
 
@@ -88,7 +91,7 @@ def recent_games(
     gp = gp.sort_values("Games", ascending=False).astype({"Wins": int})
 
     lanes = list(df["Lane"].value_counts().index)
-    return gp.reset_index(), lanes[0]
+    return gp.reset_index(), lanes
 
 
 # def season_stats(user, season_id):
