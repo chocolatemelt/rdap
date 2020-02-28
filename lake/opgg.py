@@ -2,11 +2,16 @@ import argparse
 from bs4 import BeautifulSoup
 import pandas as pd
 import requests
+import rgutils
 import sys
 import urllib
 
 LANE_MAPPING = {0: "Top", 1: "Jungle", 2: "Mid", 3: "Bot", 4: "Support", 5: ""}
 OPGG_REGION = "na"
+
+
+def opgg_season(season):
+    return f"season-{season}"
 
 
 def boil(url):
@@ -15,7 +20,7 @@ def boil(url):
 
 def get_opgg_route(route, params={}, region=OPGG_REGION):
     parsed_params = urllib.parse.urlencode(params)
-    return f"https://{region}.op.gg{route}/{parsed_params}"
+    return f"https://{region}.op.gg{route}{parsed_params}"
 
 
 def boil_opgg(route, params={}, region=OPGG_REGION):
@@ -30,7 +35,7 @@ def boil_opgg(route, params={}, region=OPGG_REGION):
 def recent_games(
     summoner, recent_limit="21d", flex=False, ranked_only=True, max_entries=30
 ):
-    soup = boil_opgg("/summoner", {"userName": summoner})
+    soup = boil_opgg("/summoner/", {"userName": summoner})
     data = []
     late = 0
     while not soup.find_all(string="There are no results recorded."):
@@ -80,7 +85,7 @@ def recent_games(
         # Call another set of games
         page = requests.get(
             get_opgg_route(
-                "/summoner/matches/ajax/averageAndList",
+                "/summoner/matches/ajax/averageAndList/",
                 {"startInfo": game_time, "summonerId": summoner_id},
             )
         )
@@ -102,7 +107,7 @@ def recent_games(
 
 
 def season_stats(summoner, season_id):
-    soup = boil_opgg("/summoner/champions", {"userName": summoner})
+    soup = boil_opgg("/summoner/champions/", {"userName": summoner})
     soloq = soup.find(class_="tabItem " + season_id)
     rows = []
     champ_data = []
@@ -161,55 +166,68 @@ def season_stats(summoner, season_id):
     )
 
 
+def opgg_user(summoner):
+    # Lists of outputs
+    out_rec = []
+    out_cur_season = []
+    out_last_season = []
+
+    lanes = []
+    ranks_s10 = []
+    ranks_prev = []
+
+    # For the purpose of calculating team average rank
+    ranksum = 0
+    rankn = 0
+    rankval = {"I": 0, "B": 1, "S": 2, "G": 3, "P": 4, "D": 5, "M": 6, "GM": 7, "C": 8}
+
+    soup = boil_opgg("/summoner/", {"userName": summoner})
+
+    recent = recent_games(summoner)
+    out_rec += [recent[0]]
+    lanes += [recent[1]]
+
+    ranks_s10 += [soup.find(class_="TierRank").string.strip()]
+
+    # Find the user's last recorded previous-season rank
+    lastrank = soup.find_all(class_="Item tip")
+    if lastrank:
+        sn = lastrank[-1].b.string
+        lastrank = lastrank[-1]["title"].split()
+        # If it looks like 'Diamond 4 30LP'
+        if len(lastrank) == 3:
+            hielo = 0
+            # Make it 'D4'
+            lastrank = lastrank[0][0] + lastrank[1]
+        else:
+            hielo = 1
+            # Include LP
+            if "Grand" in lastrank[0]:
+                lastrank = "GM " + lastrank[1]
+            else:
+                lastrank = lastrank[0][0] + " " + lastrank[1]
+        ranks_prev += [sn + " " + lastrank]
+
+        # Calculating the average rank (doesn't work great for high elo; 400LP is treated same as 0LP)
+        # Currently this computes average rank only for S9 (can be changed once ranks settle in S10)
+        if sn == "S9":
+            rankn += 1
+            if lastrank[1] == "M":
+                ranksum += rankval["GM"]
+            else:
+                ranksum += rankval[lastrank[0]]
+                if not hielo:
+                    ranksum += (4 - float(lastrank[-1])) / 4
+    else:
+        ranks_prev += ["no prev. rank"]
+
+    out_cur_season += [season_stats(summoner, opgg_season(rgutils.get_season()))]
+    out_last_season += [season_stats(summoner, opgg_season(rgutils.get_last_season()))]
+
+    print(out_rec, out_cur_season, out_last_season)
+
+
 if __name__ == "__main__":
     user = "go in idiot".replace(" ", "").lower()
-    print(season_stats(user, "season-15"))
-
-# def opgg_user(user):
-#     rank_soup = get_soup("https://na.op.gg/summoner/userName=" + user)
-
-#     if rank_soup.find(class_="SummonerNotFoundLayout"):
-#         print("Summoner not found! Check spelling?")
-#         sys.exit()
-
-#     recent = recent_games(user, rank_soup)
-#     out_rec += [recent[0]]
-#     lanes += [recent[1]]
-
-#     ranks_s10 += [rank_soup.find(class_="TierRank").string.strip()]
-
-#     # Find the user's last recorded previous-season rank
-#     lastrank = rank_soup.find_all(class_="Item tip")
-#     if lastrank:
-#         sn = lastrank[-1].b.string
-#         lastrank = lastrank[-1]["title"].split()
-#         # If it looks like 'Diamond 4 30LP'
-#         if len(lastrank) == 3:
-#             hielo = 0
-#             # Make it 'D4'
-#             lastrank = lastrank[0][0] + lastrank[1]
-#         else:
-#             hielo = 1
-#             # Include LP
-#             if "Grand" in lastrank[0]:
-#                 lastrank = "GM " + lastrank[1]
-#             else:
-#                 lastrank = lastrank[0][0] + " " + lastrank[1]
-#         ranks_prev += [sn + " " + lastrank]
-
-#         # Calculating the average rank (doesn't work great for high elo; 400LP is treated same as 0LP)
-#         # Currently this computes average rank only for S9 (can be changed once ranks settle in S10)
-#         if sn == "S9":
-#             rankn += 1
-#             if lastrank[1] == "M":
-#                 ranksum += rankval["GM"]
-#             else:
-#                 ranksum += rankval[lastrank[0]]
-#                 if not hielo:
-#                     ranksum += (4 - float(lastrank[-1])) / 4
-#     else:
-#         ranks_prev += ["no prev. rank"]
-
-#     out_s10 += [season_stats(user, "season-15")]
-#     out_s9 += [season_stats(user, "season-13")]
+    opgg_user(user)
 
