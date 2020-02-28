@@ -13,13 +13,12 @@ def boil(url):
     return BeautifulSoup(requests.get(url).text, "lxml")
 
 
-def get_opgg_route(route, params, region=OPGG_REGION):
+def get_opgg_route(route, params={}, region=OPGG_REGION):
     parsed_params = urllib.parse.urlencode(params)
     return f"https://{region}.op.gg{route}/{parsed_params}"
 
 
-def boil_opgg(route, params, region=OPGG_REGION):
-    parsed_params = urllib.parse.urlencode(params)
+def boil_opgg(route, params={}, region=OPGG_REGION):
     opgg_soup = boil(get_opgg_route(route, params, region))
 
     if opgg_soup.find(class_="SummonerNotFoundLayout"):
@@ -109,7 +108,7 @@ def season_stats(summoner, season_id):
     champ_data = []
 
     if not soloq.find(class_="Body"):
-        soloq_soup = boil("https://na.op.gg" + soloq["data-tab-data-url"])
+        soloq_soup = boil_opgg(soloq["data-tab-data-url"])
 
         # In case someone has no soloq
         if not soloq_soup.tbody:
@@ -164,7 +163,7 @@ def season_stats(summoner, season_id):
 
 if __name__ == "__main__":
     user = "go in idiot".replace(" ", "").lower()
-    print(recent_games(user))
+    print(season_stats(user, "season-15"))
 
 # def opgg_user(user):
 #     rank_soup = get_soup("https://na.op.gg/summoner/userName=" + user)
