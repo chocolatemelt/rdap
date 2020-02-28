@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import pandas as pd
 import requests
 import sys
+import urllib
 
 LANE_MAPPING = {0: "Top", 1: "Jungle", 2: "Mid", 3: "Bot", 4: "Support", 5: ""}
 
@@ -11,19 +12,21 @@ def boil(url):
     return BeautifulSoup(requests.get(url).text, "lxml")
 
 
-def get(user):
-    opgg_soup = boil("https://na.op.gg/summoner/userName=" + user)
+def boil_opgg_route(route, params):
+    parsed_params = urllib.parse.urlencode(params)
+    print(parsed_params)
+    opgg_soup = boil(f"https://na.op.gg/{route}/{parsed_params}")
 
     if opgg_soup.find(class_="SummonerNotFoundLayout"):
-        raise ValueError("Summoner not found! Check spelling?")
+        raise ValueError("summoner not found")
 
     return opgg_soup
 
 
 def recent_games(
-    user, soup, recent_limit="21d", flex=False, ranked_only=True, max_entries=30
+    summoner, recent_limit="21d", flex=False, ranked_only=True, max_entries=30
 ):
-    summoner = user.replace(" ", "").lower()
+    soup = boil_opgg_route("summoner", {"userName": summoner})
     data = []
     late = 0
     while not soup.find_all(string="There are no results recorded."):
@@ -94,67 +97,69 @@ def recent_games(
     return gp.reset_index(), lanes
 
 
-# def season_stats(user, season_id):
-#     # Grab the HTML for the op.gg Champions page
-#     soup = get_soup("https://na.op.gg/summoner/champions/userName=" + user)
-#     soloq = soup.find(class_="tabItem " + season_id)
+def season_stats(summoner, season_id):
+    soup = boil("https://na.op.gg/summoner/champions/userName=" + summoner)
+    soloq = soup.find(class_="tabItem " + season_id)
+    rows = []
+    champ_data = []
 
-#     if not soloq.find(class_="Body"):
-#         soloq_soup = get_soup("https://na.op.gg" + soloq["data-tab-data-url"])
+    if not soloq.find(class_="Body"):
+        soloq_soup = boil("https://na.op.gg" + soloq["data-tab-data-url"])
 
-#         # In case someone has no soloq
-#         if not soloq_soup.tbody:
-#             return pd.DataFrame(columns=["Champion", "Games", "Winrate", "Pickrate"])
+        # In case someone has no soloq
+        if not soloq_soup.tbody:
+            return pd.DataFrame(columns=["Champion", "Games", "Winrate", "Pickrate"])
 
-#         # Each row has data on one champ
-#         rows = soloq_soup.tbody.find_all(class_="Row")
-#     else:
-#         rows = soloq.find(class_="Body").find_all(class_="Row")
+        rows = soloq_soup.tbody.find_all(class_="Row")
+    else:
+        rows = soloq.find(class_="Body").find_all(class_="Row")
 
-#     champ_data = []
+    for row in rows:
+        champ = row.find(class_="ChampionName")["data-value"]
+        # The W/L are stored just as strings like 5W, 3L, ...
+        results = row.find_all(class_="Text")
+        # Usually there should be both wins and losses
+        if len(results) == 2:
+            wins = results[0].string.replace("W", "")
+            losses = results[1].string.replace("L", "")
+        # But if either W or L is 0, only the other exists
+        else:
+            if "W" in results[0].string:
+                wins = results[0].string.replace("W", "")
+                losses = 0
+            else:
+                wins = 0
+                losses = results[0].string.replace("L", "")
 
-#     for row in rows:
-#         champ = row.find(class_="ChampionName")["data-value"]
-#         # The W/L are stored just as strings like 5W, 3L, ...
-#         results = row.find_all(class_="Text")
-#         # Usually there should be both wins and losses
-#         if len(results) == 2:
-#             wins = results[0].string.replace("W", "")
-#             losses = results[1].string.replace("L", "")
-#         # But if either W or L is 0, only the other exists
-#         else:
-#             if "W" in results[0].string:
-#                 wins = results[0].string.replace("W", "")
-#                 losses = 0
-#             else:
-#                 wins = 0
-#                 losses = results[0].string.replace("L", "")
+        champ_data += [{"Champion": champ, "Wins": int(wins), "Losses": int(losses)}]
 
-#         champ_data += [{"Champion": champ, "Wins": int(wins), "Losses": int(losses)}]
+    df = pd.DataFrame(champ_data)
+    df["Games"] = df.Wins + df.Losses
+    df["Winrate"] = round(df.Wins / df.Games * 100, 1)
+    df["Pickrate"] = round(df.Games / df.Games.sum() * 100, 1)
 
-#     df = pd.DataFrame(champ_data)
-#     df["Games"] = df.Wins + df.Losses
-#     df["Winrate"] = round(df.Wins / df.Games * 100, 1)
-#     df["Pickrate"] = round(df.Games / df.Games.sum() * 100, 1)
+    # Retain all champs with pickrate >5% (could adjust to anything else)
+    # and ake sure 5 <= n <= 10
+    n = sum(df.Pickrate > 5)
+    n = min(max(n, 5), 10)
+    subset = df[["Champion", "Games", "Pickrate", "Winrate"]].head(n)
 
-#     # Retain all champs with pickrate >5% (could adjust to anything else)
-#     n = sum(df.Pickrate > 5)
-#     # Make sure 5 <= n <= 10
-#     n = min(max(n, 5), 10)
-#     subset = df[["Champion", "Games", "Pickrate", "Winrate"]].head(n)
+    return subset.append(
+        {
+            "Champion": "Total",
+            "Games": subset.Games.sum(),
+            "Pickrate": subset.Pickrate.sum(),
+            "Winrate": (
+                (subset.Winrate * subset.Games).sum() / subset.Games.sum()
+            ).round(1),
+        },
+        ignore_index=True,
+    )
 
-#     return subset.append(
-#         {
-#             "Champion": "Total",
-#             "Games": subset.Games.sum(),
-#             "Pickrate": subset.Pickrate.sum(),
-#             "Winrate": (
-#                 (subset.Winrate * subset.Games).sum() / subset.Games.sum()
-#             ).round(1),
-#         },
-#         ignore_index=True,
-#     )
 
+if __name__ == "__main__":
+    user = "go in idiot".replace(" ", "").lower()
+    print(recent_games(user))
 
 # def opgg_user(user):
 #     rank_soup = get_soup("https://na.op.gg/summoner/userName=" + user)
