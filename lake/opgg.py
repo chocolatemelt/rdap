@@ -212,9 +212,8 @@ def season_rank(summoner, soup):
 
 
 # returns a dict of outputs as per bhaskar's original script
-# soup = boil_opgg("/summoner/", {"userName": summoner})
 def opgg_user(summoner):
-    summoner_soup = boil_opgg("/summoner/", {"userName": user})
+    summoner_soup = boil_opgg("/summoner/", {"userName": summoner})
     recent = recent_games(summoner, summoner_soup)
     ranks = season_rank(summoner, summoner_soup)
 
@@ -226,8 +225,9 @@ def opgg_user(summoner):
         season_stats(summoner, champions_soup, opgg_season(rgutils.get_last_season()))
     ]
 
-    print(recent)
-    print(ranks)
-    print(current_season)
-    print(last_season)
-
+    return {
+        "recent_history": recent,
+        "ranks": ranks,
+        "current_season": current_season,
+        "last_season": last_season,
+    }
