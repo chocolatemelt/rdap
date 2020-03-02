@@ -3,3 +3,6 @@ env/**
 
 # configs, etc.
 config.yml
+
+# local dev excludes
+.vscode

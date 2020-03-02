@@ -1,5 +1,6 @@
 cd $(dirname $0)
-curl -O http://static.developer.riotgames.com/docs/lol/seasons.json
+# this one is outdated... 2 months into the season as of writing
+# curl -O http://static.developer.riotgames.com/docs/lol/seasons.json
 curl -O http://static.developer.riotgames.com/docs/lol/queues.json
 curl -O https://ddragon.leagueoflegends.com/realms/na.json
 curl -O https://ddragon.leagueoflegends.com/api/versions.json
